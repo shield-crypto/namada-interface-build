@@ -29,6 +29,13 @@ jobs:
       - name: Checkout this repository
         uses: actions/checkout@v4
 
+      - name: Cache Last Commit
+        id: cache-primes
+        uses: actions/cache@v4
+        with:
+            path: last_commit.txt
+            key: ${{ runner.os }}-last_commit
+      
       - name: Restore last processed commit hash
         id: cache-last-commit
         run: |
@@ -40,7 +47,6 @@ jobs:
             echo "" > last_commit.txt
           fi
       
-
       - name: Clone source repository
         uses: actions/checkout@v4
         with:
@@ -76,17 +82,17 @@ jobs:
           echo "$LATEST_COMMIT" > ../last_commit.txt
           echo "do_build=true" >> $GITHUB_ENV
   
-      - name: Save latest commit hash
-        if: env.do_build == 'true'
-        run: |
-            echo "$(cat last_commit.txt)" > last_commit.txt
+   #   - name: Save latest commit hash
+   #     if: env.do_build == 'true'
+   #     run: |
+   #         echo "$(cat last_commit.txt)" > last_commit.txt
         
-      - name: Update cache with new commit hash
-        if: env.do_build == 'true'
-        uses: actions/cache@v3
-        with:
-            path: last_commit.txt
-            key: last-commit-${{ github.run_id }}
+   #   - name: Update cache with new commit hash
+   #     if: env.do_build == 'true'
+   #     uses: actions/cache@v3
+   #     with:
+   #         path: last_commit.txt
+   #         key: last-commit-${{ github.run_id }}
         
 
       - name: Install yarn dependencies
@@ -148,15 +154,8 @@ jobs:
           repository: anoma/namada-interface
           ref: main
           path: target-repo
-          token: ${{ secrets.GH_DEPLOY_KEY }}
-       
-      - name: Set up SSH key
-        run: |
-            mkdir -p ~/.ssh
-            echo "${{ secrets.GH_DEPLOY_KEY }}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
-            ssh-keyscan github.com >> ~/.ssh/known_hosts    
-
+          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
+        
       - name: Clean the target repository
         run: |
             git rm -rf target-repo/*
