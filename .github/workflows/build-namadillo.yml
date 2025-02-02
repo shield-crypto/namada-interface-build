@@ -91,6 +91,7 @@ jobs:
       - name: Install yarn dependencies
         if: env.new_commits == 'true'
         uses: ./source-repo/.github/actions/yarn-cache
+        
 
       - name: Restore Rust cache
         if: env.new_commits == 'true'
@@ -104,12 +105,12 @@ jobs:
   
       - name: Build Namadillo
         if: env.new_commits == 'true'
-        working-directory: ./source-repo/apps/namadillo
+        working-directory: source-repo/apps/namadillo
         run: yarn build
   
       - name: Configure Namadillo
         if: env.new_commits == 'true'
-        working-directory: ./source-repo/apps/namadillo
+        working-directory: source-repo/apps/namadillo
         run: |
             echo "" > dist/config.toml
             echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
@@ -119,14 +120,14 @@ jobs:
   
       - name: Build the Chrome extension
         if: env.new_commits == 'true'
-        working-directory: ./source-repo/apps/extension
+        working-directory: source-repo/apps/extension
         run: yarn build:chrome
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
   
       - name: Build the Firefox extension
         if: env.new_commits == 'true'
-        working-directory: ./source-repo/apps/extension
+        working-directory: source-repo/apps/extension
         run: yarn build:firefox
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
@@ -143,7 +144,7 @@ jobs:
         env:
             REPO: git@github.com:shield-crypto/namadillo-build.git
             BRANCH: main
-            FOLDER: "./source-repo/apps/namadillo/dist"
+            FOLDER: "source-repo/apps/namadillo/dist"
             SSH_PRIVATE_KEY: ${{ secrets.GH_DEPLOY_KEY }}
       
       
