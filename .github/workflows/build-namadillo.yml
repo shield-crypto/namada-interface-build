@@ -82,26 +82,6 @@ jobs:
           echo "$LATEST_COMMIT" > ../last_commit.txt
           echo "do_build=true" >> $GITHUB_ENV
   
-   #   - name: Save latest commit hash
-   #     if: env.do_build == 'true'
-   #     run: |
-   #         echo "$(cat last_commit.txt)" > last_commit.txt
-        
-   #   - name: Update cache with new commit hash
-   #     if: env.do_build == 'true'
-   #     uses: actions/cache@v3
-   #     with:
-   #         path: last_commit.txt
-   #         key: last-commit-${{ github.run_id }}
-        
-
- #     - name: Install yarn dependencies
- #       if: env.do_build == 'true'
- #       #uses: ./source-repo/.github/actions/yarn-cache
- #       working-directory: source-repo
- #       run: yarn
- #       shell: bash
-
       - name: Restore yarn cache
         if: env.do_build == 'true'
         uses: actions/cache@v3
@@ -120,19 +100,6 @@ jobs:
         shell: bash
         working-directory: source-repo 
 
-
-
-  #    - name: Restore Rust cache
-  #      uses: ./source-repo/.github/actions/rust-cache
-  #      with:
-  #        cache-name: build  
-        
-
-#      - name: Restore Rust cache
-#        if: env.do_build == 'true'
-#        uses: ./source-repo/.github/actions/rust-cache
-#        with:
-#          cache-name: build
   
       - name: Install protoc
         if: env.do_build == 'true'
@@ -174,6 +141,7 @@ jobs:
             cp source-repo/apps/extension/build/chrome/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-chrome.zip
   
       - name: Clone Target repository
+        if: env.do_build == 'true'
         uses: actions/checkout@v4
         with:
           repository: anoma/namada-interface
@@ -182,18 +150,23 @@ jobs:
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
         
       - name: Clean the target repository
+        if: env.do_build == 'true'
         run: |
             cd target-repo
             rm -rf *
             git commit -m "Cleanup target repository"    
 
       - name: Copy build output to target repo
+        if: env.do_build == 'true'
         run: |
               cp -r source-repo/apps/namadillo/dist/* target-repo/      
       
       - name: Commit and push the changes
+        if: env.do_build == 'true'
         run: |
                 cd target-repo
+                git config --global user.name "GitHub Actions"
+                git config --global user.email "actions@github.com"
                 git add .
                 git commit -m "Deploy new Namadillo version"
                 git push origin main
