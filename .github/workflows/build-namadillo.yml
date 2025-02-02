@@ -95,18 +95,18 @@ jobs:
    #         key: last-commit-${{ github.run_id }}
         
 
-      - name: Install yarn dependencies
-        if: env.do_build == 'true'
-        #uses: ./source-repo/.github/actions/yarn-cache
-        working-directory: source-repo
-        run: yarn
-        shell: bash
+ #     - name: Install yarn dependencies
+ #       if: env.do_build == 'true'
+ #       #uses: ./source-repo/.github/actions/yarn-cache
+ #       working-directory: source-repo
+ #       run: yarn
+ #       shell: bash
 
       - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-cache
+        uses: ./source-repo/.github/actions/yarn-cache
 
       - name: Restore Rust cache
-        uses: ./.github/actions/rust-cache
+        uses: ./source-repo/.github/actions/rust-cache
         with:
           cache-name: build  
         
