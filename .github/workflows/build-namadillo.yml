@@ -42,6 +42,10 @@ jobs:
           echo "New changes detected!"
           echo "new_commits=true" >> $GITHUB_ENV
   
+      - name: Install yarn dependencies
+        if: env.new_commits == 'true'
+        uses: ./.github/actions/yarn-cache
+
       - name: Restore Rust cache
         if: env.new_commits == 'true'
         uses: ./.github/actions/rust-cache
@@ -95,5 +99,7 @@ jobs:
             BRANCH: main
             FOLDER: "./apps/namadillo/dist"
             SSH_PRIVATE_KEY: ${{ secrets.GH_DEPLOY_KEY }}
-
+      
+      
+          
      
