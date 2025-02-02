@@ -28,7 +28,6 @@ jobs:
       - name: Check for updates
         id: check
         run: |
-          ls -al
           LATEST_COMMIT=$(git rev-parse HEAD)
           echo "Latest commit: $LATEST_COMMIT"
           
@@ -42,11 +41,59 @@ jobs:
           echo "$LATEST_COMMIT" > "$CACHE_FILE"
           echo "New changes detected!"
           echo "new_commits=true" >> $GITHUB_ENV
-
-      - name: Run Build Steps (if new commits found)
+  
+      - name: Restore Rust cache
+        if: env.new_commits == 'true'
+        uses: ./.github/actions/rust-cache
+        with:
+          cache-name: build
+  
+      - name: Install protoc
+        if: env.new_commits == 'true'
+        run: sudo apt-get install -y protobuf-compiler
+  
+      - name: Build Namadillo
+        if: env.new_commits == 'true'
+        working-directory: ./apps/namadillo
+        run: yarn build
+  
+      - name: Configure Namadillo
+        if: env.new_commits == 'true'
+        working-directory: ./apps/namadillo
+        run: |
+            echo "" > dist/config.toml
+            echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
+            echo "rpc_url = \"${{ env.RPC_URL }}\"" >> dist/config.toml
+            echo "masp_indexer_url = \"${{ env.MASP_URL }}\"" >> dist/config.toml
+             
+  
+      - name: Build the Chrome extension
+        if: env.new_commits == 'true'
+        working-directory: ./apps/extension
+        run: yarn build:chrome
+        env:
+            NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
+  
+      - name: Build the Firefox extension
+        if: env.new_commits == 'true'
+        working-directory: ./apps/extension
+        run: yarn build:firefox
+        env:
+            NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
+  
+      - name: Copy the extensions for deployment
         if: env.new_commits == 'true'
         run: |
-          echo "Building project..."
-          # Add your build commands here
+            cp apps/extension/build/firefox/namada_keychain-*.zip apps/namadillo/dist/namada-keychain-firefox.zip
+            cp apps/extension/build/chrome/namada_keychain-*.zip apps/namadillo/dist/namada-keychain-chrome.zip
+  
+      - name: Deploy
+        if: env.new_commits == 'true'
+        uses: s0/git-publish-subdir-action@develop
+        env:
+            REPO: git@github.com:shield-crypto/namadillo-build.git
+            BRANCH: main
+            FOLDER: "./apps/namadillo/dist"
+            SSH_PRIVATE_KEY: ${{ secrets.GH_DEPLOY_KEY }}
 
      
