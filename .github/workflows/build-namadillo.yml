@@ -1,0 +1,52 @@
+name: Check & build Namadillo
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # Runs every 30 minutes
+
+  workflow_dispatch:  # Allows manual trigger
+env:
+  INDEXER_URL: https://namada-indexer.shield-crypto.com
+  RPC_URL: https://namada-public-rpc.shield-crypto.com
+  MASP_URL: https://namada-public-masp.shield-crypto.com
+  CHAIN_ID: namada.5f5de2dd1b88cba30586420
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone source repository
+        uses: actions/checkout@v4
+        with:
+          repository: anoma/namada-interface
+          ref: main
+
+      # run: |
+      #   git clone --depth=1 https://github.com/anoma/namada-interface.git source-repo
+
+      - name: Check for updates
+        id: check
+        run: |
+          cd source-repo
+          LATEST_COMMIT=$(git rev-parse HEAD)
+          echo "Latest commit: $LATEST_COMMIT"
+          
+          # Compare with previous commit stored in GitHub cache
+          CACHE_FILE="$HOME/latest_commit.txt"
+          if [[ -f "$CACHE_FILE" && "$(cat $CACHE_FILE)" == "$LATEST_COMMIT" ]]; then
+            echo "No new commits. Exiting."
+            exit 0
+          fi
+          
+          echo "$LATEST_COMMIT" > "$CACHE_FILE"
+          echo "New changes detected!"
+          echo "new_commits=true" >> $GITHUB_ENV
+
+      - name: Run Build Steps (if new commits found)
+        if: env.new_commits == 'true'
+        run: |
+          echo "Building project..."
+          # Add your build commands here
+
+     
