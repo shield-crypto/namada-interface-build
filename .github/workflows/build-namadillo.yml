@@ -101,6 +101,14 @@ jobs:
         working-directory: source-repo
         run: yarn
         shell: bash
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-cache
+
+      - name: Restore Rust cache
+        uses: ./.github/actions/rust-cache
+        with:
+          cache-name: build  
         
 
 #      - name: Restore Rust cache
@@ -158,12 +166,12 @@ jobs:
         
       - name: Clean the target repository
         run: |
-            git rm -rf target-repo/*
+            cd target-repo
+            rm -rf *
             git commit -m "Cleanup target repository"    
 
       - name: Copy build output to target repo
         run: |
-              mkdir -p target-folder
               cp -r source-repo/apps/namadillo/dist/* target-repo/      
       
       - name: Commit and push the changes
