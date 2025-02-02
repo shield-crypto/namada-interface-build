@@ -90,14 +90,17 @@ jobs:
 
       - name: Install yarn dependencies
         if: env.new_commits == 'true'
-        uses: ./source-repo/.github/actions/yarn-cache
+        #uses: ./source-repo/.github/actions/yarn-cache
+        working-directory: source-repo
+        run: yarn
+        shell: bash
         
 
-      - name: Restore Rust cache
-        if: env.new_commits == 'true'
-        uses: ./source-repo/.github/actions/rust-cache
-        with:
-          cache-name: build
+#      - name: Restore Rust cache
+#        if: env.new_commits == 'true'
+#        uses: ./source-repo/.github/actions/rust-cache
+#        with:
+#          cache-name: build
   
       - name: Install protoc
         if: env.new_commits == 'true'
