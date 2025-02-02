@@ -142,14 +142,46 @@ jobs:
             cp source-repo/apps/extension/build/firefox/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-firefox.zip
             cp source-repo/apps/extension/build/chrome/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-chrome.zip
   
-      - name: Deploy
-        if: env.do_build == 'true'
-        uses: s0/git-publish-subdir-action@develop
-        env:
-            REPO: git@github.com:shield-crypto/namadillo-build.git
-            BRANCH: main
-            FOLDER: "source-repo/apps/namadillo/dist"
-            SSH_PRIVATE_KEY: ${{ secrets.GH_DEPLOY_KEY }}
+      - name: Clone Target repository
+        uses: actions/checkout@v4
+        with:
+          repository: anoma/namada-interface
+          ref: main
+          path: target-repo
+          token: ${{ secrets.GH_DEPLOY_KEY }}
+       
+      - name: Set up SSH key
+        run: |
+            mkdir -p ~/.ssh
+            echo "${{ secrets.GH_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts    
+
+      - name: Clean the target repository
+        run: |
+            git rm -rf target-repo/*
+            git commit -m "Cleanup target repository"    
+
+      - name: Copy build output to target repo
+        run: |
+              mkdir -p target-folder
+              cp -r source-repo/apps/namadillo/dist/* target-repo/      
+      
+      - name: Commit and push the changes
+        run: |
+                cd target-repo
+                git add .
+                git commit -m "Deploy new Namadillo version"
+                git push origin main
+      
+ #     - name: Deploy
+ #       if: env.do_build == 'true'
+ #       uses: s0/git-publish-subdir-action@develop
+ #       env:
+ #           REPO: git@github.com:shield-crypto/namadillo-build.git
+ #           BRANCH: main
+ #           FOLDER: "source-repo/apps/namadillo/dist"
+ #           SSH_PRIVATE_KEY: ${{ secrets.GH_DEPLOY_KEY }}
       
       
           
