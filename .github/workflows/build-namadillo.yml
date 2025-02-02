@@ -30,10 +30,15 @@ jobs:
 
       - name: Restore last processed commit hash
         id: cache-last-commit
-        uses: actions/cache@v3
-        with:
-          path: last_commit.txt
-          key: last-commit-hash
+        run: |
+          if [[ -f last_commit.txt ]]; then
+            echo "Restoring last commit hash:"
+            cat last_commit.txt
+          else
+            echo "No cache found, initializing..."
+            echo "" > last_commit.txt
+          fi
+      
 
       - name: Clone source repository
         uses: actions/checkout@v4
@@ -73,8 +78,15 @@ jobs:
       - name: Save latest commit hash
         if: env.new_commits == 'true'
         run: |
-            echo "Saving latest commit hash..."
-            cp last_commit.txt $GITHUB_WORKSPACE/
+            echo "$(cat last_commit.txt)" > last_commit.txt
+        
+      - name: Update cache with new commit hash
+        if: env.new_commits == 'true'
+        uses: actions/cache@v3
+        with:
+            path: last_commit.txt
+            key: last-commit-${{ github.run_id }}
+        
 
       - name: Install yarn dependencies
         if: env.new_commits == 'true'
