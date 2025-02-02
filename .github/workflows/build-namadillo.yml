@@ -28,7 +28,7 @@ jobs:
       - name: Check for updates
         id: check
         run: |
-          cd namada-interface
+          ls -al
           LATEST_COMMIT=$(git rev-parse HEAD)
           echo "Latest commit: $LATEST_COMMIT"
           
