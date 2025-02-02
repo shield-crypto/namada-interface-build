@@ -153,27 +153,23 @@ jobs:
           path: target-repo
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
         
-      - name: Clean the target repository
+      - name: Publish site
         if: env.do_build == 'true'
         run: |
+            ls source-repo
+            ls target-repo
             cd target-repo
-            rm -rf *
             git config --global user.name "GitHub Actions"
             git config --global user.email "actions@github.com"
-            git commit -m "Cleanup target repository"    
-
-      - name: Copy build output to target repo
-        if: env.do_build == 'true'
-        run: |
-              cp -r source-repo/apps/namadillo/dist/* target-repo/      
-      
-      - name: Commit and push the changes
-        if: env.do_build == 'true'
-        run: |
-                cd target-repo
-                git add .
-                git commit -m "Deploy new Namadillo version"
-                git push origin main
+            echo clean up existing site
+            rm -rf *
+            git rm .
+            git commit -m "Cleanup target repository"   
+            echo copying the new site 
+            cp -r ../source-repo/apps/namadillo/dist/* .
+            git add .
+            git commit -m "Deploy new Namadillo version"
+            git push origin main
       
       
       
