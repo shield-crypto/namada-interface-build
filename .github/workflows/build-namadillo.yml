@@ -94,6 +94,10 @@ jobs:
             ./source-repo/.cache/puppeteer
           key: ${{ runner.os }}-yarn-cache-${{ hashFiles('**/yarn.lock') }}
 
+      - name: Debug restored cache
+        if: env.do_build == 'true'
+        run: ls -l source-repo/
+
       - name: Install dependencies
         if: env.do_build == 'true'
         run: yarn
@@ -154,6 +158,8 @@ jobs:
         run: |
             cd target-repo
             rm -rf *
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
             git commit -m "Cleanup target repository"    
 
       - name: Copy build output to target repo
@@ -165,8 +171,6 @@ jobs:
         if: env.do_build == 'true'
         run: |
                 cd target-repo
-                git config --global user.name "GitHub Actions"
-                git config --global user.email "actions@github.com"
                 git add .
                 git commit -m "Deploy new Namadillo version"
                 git push origin main
