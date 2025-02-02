@@ -2,9 +2,18 @@ name: Check & build Namadillo
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # Runs every 30 minutes
+    - cron: "0 * * * *"  # Runs every hour
 
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Force the build, ignoring the last commit check"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
 env:
   INDEXER_URL: https://namada-indexer.shield-crypto.com
   RPC_URL: https://namada-public-rpc.shield-crypto.com
@@ -16,11 +25,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
+      - name: Restore last processed commit hash
+        id: cache-last-commit
+        uses: actions/cache@v3
+        with:
+          path: last_commit.txt
+          key: last-commit-hash
+
       - name: Clone source repository
         uses: actions/checkout@v4
         with:
           repository: anoma/namada-interface
           ref: main
+          path: source-repo
 
       # run: |
       #   git clone --depth=1 https://github.com/anoma/namada-interface.git source-repo
@@ -28,27 +48,41 @@ jobs:
       - name: Check for updates
         id: check
         run: |
+          cd source-repo
           LATEST_COMMIT=$(git rev-parse HEAD)
           echo "Latest commit: $LATEST_COMMIT"
-          
-          # Compare with previous commit stored in GitHub cache
-          CACHE_FILE="$HOME/latest_commit.txt"
-          if [[ -f "$CACHE_FILE" && "$(cat $CACHE_FILE)" == "$LATEST_COMMIT" ]]; then
-            echo "No new commits. Exiting."
+
+          FORCE_BUILD=${{ github.event.inputs.force_build }}
+          echo "Force build: $FORCE_BUILD"
+
+          # Check if last_commit.txt exists
+          if [[ -f ../last_commit.txt ]]; then
+            LAST_COMMIT=$(cat ../last_commit.txt)
+          else
+            LAST_COMMIT=""
+          fi
+
+          if [[ "$LATEST_COMMIT" == "$LAST_COMMIT" && "$FORCE_BUILD" != "true" ]]; then
+            echo "No new commits found. Exiting."
             exit 0
           fi
-          
-          echo "$LATEST_COMMIT" > "$CACHE_FILE"
-          echo "New changes detected!"
+
+          echo "$LATEST_COMMIT" > ../last_commit.txt
           echo "new_commits=true" >> $GITHUB_ENV
   
+      - name: Save latest commit hash
+        if: env.new_commits == 'true'
+        run: |
+            echo "Saving latest commit hash..."
+            cp last_commit.txt $GITHUB_WORKSPACE/
+
       - name: Install yarn dependencies
         if: env.new_commits == 'true'
-        uses: ./.github/actions/yarn-cache
+        uses: ./source-repo/.github/actions/yarn-cache
 
       - name: Restore Rust cache
         if: env.new_commits == 'true'
-        uses: ./.github/actions/rust-cache
+        uses: ./source-repo/.github/actions/rust-cache
         with:
           cache-name: build
   
@@ -58,12 +92,12 @@ jobs:
   
       - name: Build Namadillo
         if: env.new_commits == 'true'
-        working-directory: ./apps/namadillo
+        working-directory: ./source-repo/apps/namadillo
         run: yarn build
   
       - name: Configure Namadillo
         if: env.new_commits == 'true'
-        working-directory: ./apps/namadillo
+        working-directory: ./source-repo/apps/namadillo
         run: |
             echo "" > dist/config.toml
             echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
@@ -73,14 +107,14 @@ jobs:
   
       - name: Build the Chrome extension
         if: env.new_commits == 'true'
-        working-directory: ./apps/extension
+        working-directory: ./source-repo/apps/extension
         run: yarn build:chrome
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
   
       - name: Build the Firefox extension
         if: env.new_commits == 'true'
-        working-directory: ./apps/extension
+        working-directory: ./source-repo/apps/extension
         run: yarn build:firefox
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
@@ -88,8 +122,8 @@ jobs:
       - name: Copy the extensions for deployment
         if: env.new_commits == 'true'
         run: |
-            cp apps/extension/build/firefox/namada_keychain-*.zip apps/namadillo/dist/namada-keychain-firefox.zip
-            cp apps/extension/build/chrome/namada_keychain-*.zip apps/namadillo/dist/namada-keychain-chrome.zip
+            cp source-repo/apps/extension/build/firefox/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-firefox.zip
+            cp source-repo/apps/extension/build/chrome/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-chrome.zip
   
       - name: Deploy
         if: env.new_commits == 'true'
@@ -97,7 +131,7 @@ jobs:
         env:
             REPO: git@github.com:shield-crypto/namadillo-build.git
             BRANCH: main
-            FOLDER: "./apps/namadillo/dist"
+            FOLDER: "./source-repo/apps/namadillo/dist"
             SSH_PRIVATE_KEY: ${{ secrets.GH_DEPLOY_KEY }}
       
       
