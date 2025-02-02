@@ -2,7 +2,8 @@ name: Check & build Namadillo
 
 on:
   schedule:
-    - cron: "0 * * * *"  # Runs every hour
+    - cron: "0 */3 * * *"  # Runs every 3 hours
+            
 
   workflow_dispatch:
     inputs:
@@ -73,15 +74,15 @@ jobs:
           fi
 
           echo "$LATEST_COMMIT" > ../last_commit.txt
-          echo "new_commits=true" >> $GITHUB_ENV
+          echo "do_build=true" >> $GITHUB_ENV
   
       - name: Save latest commit hash
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         run: |
             echo "$(cat last_commit.txt)" > last_commit.txt
         
       - name: Update cache with new commit hash
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         uses: actions/cache@v3
         with:
             path: last_commit.txt
@@ -89,7 +90,7 @@ jobs:
         
 
       - name: Install yarn dependencies
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         #uses: ./source-repo/.github/actions/yarn-cache
         working-directory: source-repo
         run: yarn
@@ -97,22 +98,22 @@ jobs:
         
 
 #      - name: Restore Rust cache
-#        if: env.new_commits == 'true'
+#        if: env.do_build == 'true'
 #        uses: ./source-repo/.github/actions/rust-cache
 #        with:
 #          cache-name: build
   
       - name: Install protoc
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         run: sudo apt-get install -y protobuf-compiler
   
       - name: Build Namadillo
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         working-directory: source-repo/apps/namadillo
         run: yarn build
   
       - name: Configure Namadillo
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         working-directory: source-repo/apps/namadillo
         run: |
             echo "" > dist/config.toml
@@ -122,27 +123,27 @@ jobs:
              
   
       - name: Build the Chrome extension
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         working-directory: source-repo/apps/extension
         run: yarn build:chrome
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
   
       - name: Build the Firefox extension
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         working-directory: source-repo/apps/extension
         run: yarn build:firefox
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
   
       - name: Copy the extensions for deployment
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         run: |
             cp source-repo/apps/extension/build/firefox/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-firefox.zip
             cp source-repo/apps/extension/build/chrome/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-chrome.zip
   
       - name: Deploy
-        if: env.new_commits == 'true'
+        if: env.do_build == 'true'
         uses: s0/git-publish-subdir-action@develop
         env:
             REPO: git@github.com:shield-crypto/namadillo-build.git
