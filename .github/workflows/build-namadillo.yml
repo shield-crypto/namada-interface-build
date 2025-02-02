@@ -102,13 +102,30 @@ jobs:
  #       run: yarn
  #       shell: bash
 
-      - name: Install yarn dependencies
-        uses: ./source-repo/.github/actions/yarn-cache
-
-      - name: Restore Rust cache
-        uses: ./source-repo/.github/actions/rust-cache
+      - name: Restore yarn cache
+        if: env.do_build == 'true'
+        uses: actions/cache@v3
         with:
-          cache-name: build  
+          path: |
+            ./source-repo/node_modules
+            ./source-repo/apps/*/node_modules
+            ./source-repo/packages/*/node_modules
+            ./source-repo/e2e/node_modules
+            ./source-repo/.cache/puppeteer
+          key: ${{ runner.os }}-yarn-cache-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install dependencies
+        if: env.do_build == 'true'
+        run: yarn
+        shell: bash
+        working-directory: source-repo 
+
+
+
+  #    - name: Restore Rust cache
+  #      uses: ./source-repo/.github/actions/rust-cache
+  #      with:
+  #        cache-name: build  
         
 
 #      - name: Restore Rust cache
