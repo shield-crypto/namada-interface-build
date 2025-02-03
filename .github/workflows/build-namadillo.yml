@@ -169,7 +169,8 @@ jobs:
             cp -r ../source-repo/apps/namadillo/dist/* .
             git add .
             git commit -m "docs: Deploy version"
-            git push origin main
+            git remote set-url namadillo-build git@github.com:shield-crypto/namadillo-build.git
+            git push namadillo-build main
       
       
       
