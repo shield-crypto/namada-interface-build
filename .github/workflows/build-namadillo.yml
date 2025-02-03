@@ -148,10 +148,11 @@ jobs:
         if: env.do_build == 'true'
         uses: actions/checkout@v4
         with:
-          repository: anoma/namada-interface
+          repository: shield-crypto/namadillo-build
           ref: main
           path: target-repo
           ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
+
         
       - name: Publish site
         if: env.do_build == 'true'
@@ -169,9 +170,10 @@ jobs:
             cp -r ../source-repo/apps/namadillo/dist/* .
             git add .
             git commit -m "docs: Deploy version"
-            git remote remove namadillo-build 2>/dev/null || true  # Remove if it already exists (ignore errors)
-            git remote add namadillo-build git@github.com:shield-crypto/namadillo-build.git  # Add remote
-            git push namadillo-build main
+            git push origin main
+
+       #     git remote remove namadillo-build 2>/dev/null || true  # Remove if it already exists (ignore errors)
+       #     git remote add namadillo-build git@github.com:shield-crypto/namadillo-build.git  # Add remote
       
       
       
