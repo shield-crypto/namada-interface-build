@@ -156,6 +156,8 @@ jobs:
         run: |
             git config --global user.name "GitHub Actions"
             git config --global user.email "actions@github.com"
+            git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/shield-crypto/namada-interface-build.git
             git add .github/last_commit.txt
             git commit -m "chore: update last built commit hash"
-            git push
+            git push origin main
+
