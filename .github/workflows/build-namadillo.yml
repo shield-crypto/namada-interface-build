@@ -41,6 +41,7 @@ jobs:
           else
             echo "LAST_TAG=" >> $GITHUB_ENV
           fi
+          echo "Loaded Last Processed Tag. LAST_TAG=" 
       - name: Clone Namada repository
         uses: actions/checkout@v4
         with:
@@ -52,8 +53,10 @@ jobs:
         id: check-tag
         run: |
           cd source-repo
+          echo "Last Processed Tag. LAST_TAG=" 
+          echo "LAST_TAG=" >> $GITHUB_ENV
           LATEST_TAG=$(git tag --sort=-creatordate | grep -E '^namadillo@' | head -n 1)
-          echo "Latest tag: $LATEST_TAG"
+          echo "Latest tag from Namada: $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
           FORCE_BUILD="${{ github.event.inputs.force_build || 'false' }}"
