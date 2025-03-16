@@ -66,7 +66,7 @@ jobs:
             echo "No new tag found. Exiting."
             exit 0
           fi
-          echo "$LATEST_TAG" > .github/last_tag.txt
+          echo "$LATEST_TAG" > ../.github/last_tag.txt
           echo "do_build=true" >> $GITHUB_ENV
           echo switching to $LATEST_TAG for the build process 
           git checkout $LATEST_TAG
