@@ -24,7 +24,7 @@ env:
   CHAIN_ID: namada.5f5de2dd1b88cba30586420
 
 jobs:
-  check-updates:
+  check-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout this repository
@@ -68,10 +68,6 @@ jobs:
           fi
           echo "$LATEST_TAG" > .github/last_tag.txt
           echo "do_build=true" >> $GITHUB_ENV
-
-  build-namadillo:     
-    runs-on: ubuntu-latest
-    steps:  
       - name: Restore yarn cache
         if: env.do_build == 'true'
         uses: actions/cache@v3
