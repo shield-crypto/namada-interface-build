@@ -51,6 +51,7 @@ jobs:
       - name: Fetch latest Namadillo tag
         id: check-tag
         run: |
+          cd source-repo
           LATEST_TAG=$(git tag --sort=-creatordate | grep -E '^namadillo@' | head -n 1)
           echo "Latest tag: $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
