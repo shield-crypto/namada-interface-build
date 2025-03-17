@@ -1,1 +1,1 @@
-namadillo@v1.18.0
+namadillo@v1.19.0
