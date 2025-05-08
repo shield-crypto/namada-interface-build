@@ -1,4 +1,4 @@
-name: Check & Build Namadillo
+name: New Namadillo build
 
 on:
 #  schedule:
