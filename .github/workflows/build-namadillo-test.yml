@@ -89,9 +89,7 @@ jobs:
      #   working-directory: source-repo
       - name: Install Dependencies
         if: env.do_build == 'true'
-        working-directory: source-repo
-        uses: source-repo/.github/actions/prepare-build
-   
+        uses: ./source-repo/.github/actions/prepare-build
 
       - name: Build Namadillo
         if: env.do_build == 'true'
