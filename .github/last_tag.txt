@@ -1,1 +1,1 @@
-namadillo@v1.20.0-hotfix1
+namadillo@v1.20.0-hotfix2
