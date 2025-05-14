@@ -67,7 +67,7 @@ jobs:
 
           
           USER_INPUT_TAG="${{ inputs.build_tag }}"
-          if [ -n "$USER_INPUT_TAG" ]; then
+          if [ -n $USER_INPUT_TAG ]; then
             echo "LATEST_TAG=$USER_INPUT_TAG" >> "$GITHUB_ENV"
             echo "Using user input tag: $LATEST_TAG"
           fi
