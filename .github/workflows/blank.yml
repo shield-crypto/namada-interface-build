@@ -64,9 +64,11 @@ jobs:
           LATEST_TAG=$(git tag --sort=-creatordate | grep -E '^namadillo@' | head -n 1)
           echo "Latest tag from Namada: $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
           
-          if [ -n "${{ inputs.build_tag }}" ]; then 
-            echo "LATEST_TAG=${{ inputs.build_tag }}" >> "$GITHUB_ENV"
+          USER_INPUT_TAG="${{ inputs.build_tag }}"
+          if [ -n "$USER_INPUT_TAG" ]; then
+            echo "LATEST_TAG=$USER_INPUT_TAG" >> "$GITHUB_ENV"
             echo "Using user input tag: $LATEST_TAG"
           fi
 
