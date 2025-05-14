@@ -65,7 +65,7 @@ jobs:
           echo "Latest tag from Namada: $LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
           
-          if [ -n "${{ inputs.build_tag }}" ]; then 
+          if [[ -n "${{ inputs.build_tag }}" ]]; then 
             echo "LATEST_TAG=${{ inputs.build_tag }}" >> "$GITHUB_ENV"
             echo "Using user input tag: $LATEST_TAG"
           fi
