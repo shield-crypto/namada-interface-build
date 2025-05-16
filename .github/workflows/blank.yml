@@ -86,8 +86,8 @@ jobs:
 
 
       - name: Build and Release Namadillo
-        uses: ./.github/actions/release-project
+        uses: ./source-repo/.github/actions/release-project
         with:
           tag: $LATEST_TAG
           bundle_filename: $LATEST_TAG.zip
-          working_dir: .source-repo/apps/namadillo
+          working_dir: ./source-repo/apps/namadillo
