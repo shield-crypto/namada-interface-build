@@ -31,10 +31,13 @@ on:
         description: "Chain ID"
         required: true
         default: "namada.5f5de2dd1b88cba30586420"
-
   push:
     tags:
       - "namadillo@*"
+
+
+permissions:
+  contents: write
 
 env:
   INDEXER_URL: ${{ inputs.INDEXER_URL }}
