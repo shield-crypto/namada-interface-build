@@ -5,29 +5,37 @@ on:
 #    - cron: "0 * * * *"  # Runs every hour
   workflow_dispatch:
     inputs:
-      force_build:
-        description: "Force the build, ignoring the last tag check"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "true"
-          - "false"
       build_tag:
         description: 'A tag of the Namadillo source to use (otherwise latest is used)'
         default: ''
         required: false
         type: string
+      INDEXER_URL:
+        description: "Indexer URL"
+        required: true
+        default: "https://namada-indexer.shield-crypto.com"
+      RPC_URL:
+        description: "RPC URL"
+        required: true
+        default: "https://namada-public-rpc.shield-crypto.com"
+      MASP_URL:
+        description: "MASP URL"
+        required: true
+        default: "https://namada-public-masp.shield-crypto.com"
+      CHAIN_ID:
+        description: "Chain ID"
+        required: true
+        default: "namada.5f5de2dd1b88cba30586420"
 
   push:
     tags:
       - "namadillo@*"
 
 env:
-  INDEXER_URL: https://namada-indexer.shield-crypto.com
-  RPC_URL: https://namada-public-rpc.shield-crypto.com
-  MASP_URL: https://namada-public-masp.shield-crypto.com
-  CHAIN_ID: namada.5f5de2dd1b88cba30586420
+  INDEXER_URL: ${{ inputs.INDEXER_URL }}
+  RPC_URL: ${{ inputs.RPC_URL }}
+  MASP_URL: ${{ inputs.MASP_URL }}
+  CHAIN_ID: ${{ inputs.CHAIN_ID }}
 
 jobs:
   check-and-build:
@@ -71,13 +79,6 @@ jobs:
             echo "Using user input tag: $LATEST_TAG"
           fi
 
-          FORCE_BUILD="${{ github.event.inputs.force_build || 'false' }}"
-          echo "Force build: $FORCE_BUILD"
-
-          if [[ "$LATEST_TAG" == "$LAST_TAG" && "$FORCE_BUILD" != "true" ]]; then
-            echo "No new tag found. Exiting."
-            exit 0
-          fi
           echo "$LATEST_TAG" > ../.github/last_tag.txt
           echo "do_build=true" >> $GITHUB_ENV
           echo switching to $LATEST_TAG for the build process 
@@ -140,9 +141,41 @@ jobs:
             cp source-repo/apps/extension/build/firefox/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-firefox.zip
             cp source-repo/apps/extension/build/chrome/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-chrome.zip
 
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "${{ env.LATEST_TAG }}" > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload artifact
+        if: steps.check_release.outputs.exists == 'false'
         working-directory: source-repo/apps/namadillo/dist
         run: |
           zip -r ${{ env.LATEST_TAG }}.zip .
           gh release upload ${{ env.LATEST_TAG }} ${{ env.LATEST_TAG }}.zip
-        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Namadillo
+        if: env.do_build == 'true'
+        working-directory: source-repo/apps/namadillo
+        run: |
+            echo "" > dist/config.toml
+            echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
+            echo "rpc_url = \"${{ env.RPC_URL }}\"" >> dist/config.toml
+            echo "masp_indexer_url = \"${{ env.MASP_URL }}\"" >> dist/config.toml
+
+      - name: Clone Target repository
+        if: env.do_build == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: shield-crypto/namadillo-build
+          ref: main
+          path: target-repo
+          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
