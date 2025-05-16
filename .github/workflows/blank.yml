@@ -55,9 +55,6 @@ jobs:
           echo "Chain ID: $CHAIN_ID"
       - name: Checkout this repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch all history to check tags
-          ssh-key: ${{ secrets.GH_PAT }}
       - name: Load last processed tag
         id: load-last-tag
         run: |
