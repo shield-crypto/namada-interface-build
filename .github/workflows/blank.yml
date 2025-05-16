@@ -120,15 +120,6 @@ jobs:
         working-directory: source-repo/apps/namadillo
         run: yarn build
 
-      - name: Configure Namadillo
-        if: env.do_build == 'true'
-        working-directory: source-repo/apps/namadillo
-        run: |
-            echo "" > dist/config.toml
-            echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
-            echo "rpc_url = \"${{ env.RPC_URL }}\"" >> dist/config.toml
-            echo "masp_indexer_url = \"${{ env.MASP_URL }}\"" >> dist/config.toml
-
       - name: Build the Chrome extension
         if: env.do_build == 'true'
         working-directory: source-repo/apps/extension
@@ -142,3 +133,16 @@ jobs:
         run: yarn build:firefox
         env:
             NAMADA_INTERFACE_NAMADA_CHAIN_ID: ${{ env.CHAIN_ID }}
+
+      - name: Copy the extensions for deployment
+        if: env.do_build == 'true'
+        run: |
+            cp source-repo/apps/extension/build/firefox/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-firefox.zip
+            cp source-repo/apps/extension/build/chrome/namada_keychain-*.zip source-repo/apps/namadillo/dist/namada-keychain-chrome.zip
+
+      - name: Upload artifact
+        working-directory: source-repo/apps/namadillo/dist
+        run: |
+          zip -r ${{ env.LATEST_TAG }}.zip .
+          gh release upload ${{ env.LATEST_TAG }} ${{ env.LATEST_TAG }}.zip
+        shell: bash
