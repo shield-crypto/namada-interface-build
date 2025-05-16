@@ -156,7 +156,7 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release if it doesn't exist
         run: |
@@ -166,7 +166,7 @@ jobs:
             echo "Release ${{ env.LATEST_TAG }} already exists."
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if artifact already exists
         id: check_artifact
@@ -177,7 +177,7 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifact
         if: steps.check_artifact.outputs.exists == 'false'
@@ -189,7 +189,7 @@ jobs:
           zip -r ${{ env.LATEST_TAG }}.zip .
           gh release upload ${{ env.LATEST_TAG }} ${{ env.LATEST_TAG }}.zip
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Configure Namadillo
