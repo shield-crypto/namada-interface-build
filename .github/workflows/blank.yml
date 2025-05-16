@@ -160,8 +160,29 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create release if it doesn't exist
+        run: |
+          if ! gh release view ${{ env.LATEST_TAG }} &>/dev/null; then
+            gh release create ${{ env.LATEST_TAG }} --title "${{ env.LATEST_TAG }}" --notes "Automated release for ${{ env.LATEST_TAG }}"
+          else
+            echo "Release ${{ env.LATEST_TAG }} already exists."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if artifact already exists
+        id: check_artifact
+        run: |
+          if gh release view ${{ env.LATEST_TAG }} --json assets | grep -q "${{ env.LATEST_TAG }}.zip"; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload artifact
-        if: steps.check_release.outputs.exists == 'false'
+        if: steps.check_artifact.outputs.exists == 'false'
         working-directory: source-repo/apps/namadillo/dist
         run: |
           if [ -f ${{ env.LATEST_TAG }}.zip ]; then
@@ -171,6 +192,7 @@ jobs:
           gh release upload ${{ env.LATEST_TAG }} ${{ env.LATEST_TAG }}.zip
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Configure Namadillo
         if: env.do_build == 'true'
