@@ -41,6 +41,13 @@ jobs:
   check-and-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Print environment variables
+        run: |
+          echo "Tag: " ${{ inputs.build_tag }}
+          echo "Indexer: $INDEXER_URL"
+          echo "RPC: $RPC_URL"
+          echo "MASP: $MASP_URL"
+          echo "Chain ID: $CHAIN_ID"
       - name: Checkout this repository
         uses: actions/checkout@v4
         with:
@@ -157,6 +164,9 @@ jobs:
         if: steps.check_release.outputs.exists == 'false'
         working-directory: source-repo/apps/namadillo/dist
         run: |
+          if [ -f ${{ env.LATEST_TAG }}.zip ]; then
+            rm ${{ env.LATEST_TAG }}.zip
+          fi
           zip -r ${{ env.LATEST_TAG }}.zip .
           gh release upload ${{ env.LATEST_TAG }} ${{ env.LATEST_TAG }}.zip
         env:
