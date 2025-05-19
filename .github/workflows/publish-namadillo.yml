@@ -1,0 +1,131 @@
+name: Publish Namadillo Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: 'Name of the release to download'
+        required: true
+      publish_version:
+        description: 'Do you want to publish the version on web?'
+        required: true
+        default: 'false'
+        type: boolean
+      source_repo:
+        description: 'Repository to download the release from (e.g., owner/repo)'
+        default: 'shield-crypto/namadillo'
+        required: true
+      INDEXER_URL:
+        description: "Indexer URL"
+        required: true
+        default: "https://namada-indexer.shield-crypto.com"
+      RPC_URL:
+        description: "RPC URL"
+        required: true
+        default: "https://namada-public-rpc.shield-crypto.com"
+      MASP_URL:
+        description: "MASP URL"
+        required: true
+        default: "https://namada-public-masp.shield-crypto.com"
+      CHAIN_ID:
+        description: "Chain ID"
+        required: true
+        default: "namada.5f5de2dd1b88cba30586420"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  INDEXER_URL: ${{ inputs.INDEXER_URL }}
+  RPC_URL: ${{ inputs.RPC_URL }}
+  MASP_URL: ${{ inputs.MASP_URL }}
+  CHAIN_ID: ${{ inputs.CHAIN_ID }}
+
+jobs:
+  download-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up variables
+        id: vars
+        run: |
+          echo "RELEASE_NAME=${{ github.event.inputs.release_name }}" >> $GITHUB_ENV
+          echo "SOURCE_REPO=${{ github.event.inputs.source_repo }}" >> $GITHUB_ENV
+
+      - name: Get release info
+        id: get_release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = await github.rest.repos.getReleaseByTag({
+              owner: process.env.SOURCE_REPO.split('/')[0],
+              repo: process.env.SOURCE_REPO.split('/')[1],
+              tag: process.env.RELEASE_NAME
+            });
+            const asset = release.data.assets.find(a => a.name.endsWith('.zip') || a.name.endsWith('.tar.gz'));
+            if (!asset) {
+              throw new Error('No suitable asset found in the release.');
+            }
+            core.setOutput('asset_url', asset.browser_download_url);
+            core.setOutput('asset_name', asset.name);
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download release asset
+        run: |
+          curl -L "${{ steps.get_release.outputs.asset_url }}" -o "${{ steps.get_release.outputs.asset_name }}"
+
+      - name: Extract archive
+        run: |
+          if [[ "${{ steps.get_release.outputs.asset_name }}" == *.zip ]]; then
+            unzip "${{ steps.get_release.outputs.asset_name }}" -d dist
+          elif [[ "${{ steps.get_release.outputs.asset_name }}" == *.tar.gz ]]; then
+            mkdir -p dist
+            tar -xzf "${{ steps.get_release.outputs.asset_name }}" -C dist
+          else
+            echo "Unsupported archive format"
+            exit 1
+          fi
+
+      - name: Configure Namadillo
+        working-directory: source-repo/apps/namadillo
+        run: |
+            echo "" > dist/config.toml
+            echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
+            echo "rpc_url = \"${{ env.RPC_URL }}\"" >> dist/config.toml
+            echo "masp_indexer_url = \"${{ env.MASP_URL }}\"" >> dist/config.toml
+
+      - name: Clone Target repository
+        uses: actions/checkout@v4
+        with:
+          repository: shield-crypto/namadillo-build
+          ref: main
+          path: target-repo
+          ssh-key: ${{ secrets.GH_DEPLOY_KEY }}
+
+      - name: Publish site
+        if: ${{ github.event.inputs.publish_version == 'true' }}
+        run: |
+            ls source-repo
+            ls target-repo
+            cd target-repo
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            echo clean up existing site
+            rm -rf *
+            git rm -r . || true  # Ignore if there is nothing to remove
+            git commit -m "docs: Cleanup old version" || true # Prevent failure if nothing changed
+            echo copying the new site
+            cp -r ../source-repo/apps/namadillo/dist/* .
+            git add .
+            git commit -m "docs: Deploy version"
+            git push origin main
+
+      - name: Save last processed tag
+        run: |
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add .github/last_tag.txt
+            git commit -m "chore: update last built tag"
+            git push origin main
