@@ -58,18 +58,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const owner = process.env.SOURCE_REPO.split('/')[0];
+            const repo = process.env.SOURCE_REPO.split('/')[1];
             const release = await github.rest.repos.getReleaseByTag({
-              owner: process.env.SOURCE_REPO.split('/')[0],
-              repo: process.env.SOURCE_REPO.split('/')[1],
+              owner: owner,
+              repo: repo,
               tag: process.env.RELEASE_NAME
             });
-            console.log(release);
-            const asset = release.data.assets.find(a => a.name.endsWith('.zip') || a.name.endsWith('.tar.gz'));
-            if (!asset) {
-              throw new Error('No suitable asset found in the release.');
-            }
-            core.setOutput('asset_url', asset.browser_download_url);
-            core.setOutput('asset_name', asset.name);
+            core.setOutput('asset_url', `https://github.com/${owner}/${repo}/archive/refs/tags/{$release.tag_name}.zip`);
+            core.setOutput('asset_name', {process.env.RELEASE_NAME}.zip);
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
