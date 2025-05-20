@@ -126,7 +126,7 @@ jobs:
             git rm -r . || true  # Ignore if there is nothing to remove
             git commit -m "docs: Cleanup old version" || true # Prevent failure if nothing changed
             echo copying the new site
-            cp -r ../source-repo/apps/namadillo/dist/* .
+            cp -r ../dist/* .
             git add .
             git commit -m "docs: Deploy version"
             git push origin main
