@@ -116,7 +116,6 @@ jobs:
       - name: Publish site
         if: ${{ github.event.inputs.publish_version == 'true' }}
         run: |
-            ls source-repo
             ls target-repo
             cd target-repo
             git config --global user.name "GitHub Actions"
