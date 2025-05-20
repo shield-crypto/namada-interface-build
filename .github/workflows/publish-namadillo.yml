@@ -47,6 +47,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Print environment variables
+        run: |
+          echo "Version: " ${{ inputs.release_name }}
+          echo "Indexer: $INDEXER_URL"
+          echo "RPC: $RPC_URL"
+          echo "MASP: $MASP_URL"
+          echo "Chain ID: $CHAIN_ID"
+          
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
       - name: Set up variables
         id: vars
         run: |
