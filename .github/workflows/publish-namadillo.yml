@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Configure Namadillo
-        working-directory: source-repo/apps/namadillo
+        working-directory: .
         run: |
             echo "" > dist/config.toml
             echo "indexer_url = \"${{ env.INDEXER_URL }}\"" >> dist/config.toml
