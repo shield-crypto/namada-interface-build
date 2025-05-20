@@ -65,7 +65,7 @@ jobs:
               repo: repo,
               tag: process.env.RELEASE_NAME
             });
-            core.setOutput('asset_url', `https://github.com/${owner}/${repo}/archive/refs/tags/${release.tag_name}.zip`);
+            core.setOutput('asset_url', `https://github.com/${owner}/${repo}/archive/refs/tags/${process.env.RELEASE_NAME}.zip`);
             core.setOutput('asset_name', `${process.env.RELEASE_NAME}.zip`);
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
