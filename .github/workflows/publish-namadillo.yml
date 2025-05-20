@@ -63,6 +63,7 @@ jobs:
               repo: process.env.SOURCE_REPO.split('/')[1],
               tag: process.env.RELEASE_NAME
             });
+            console.log(release);
             const asset = release.data.assets.find(a => a.name.endsWith('.zip') || a.name.endsWith('.tar.gz'));
             if (!asset) {
               throw new Error('No suitable asset found in the release.');
