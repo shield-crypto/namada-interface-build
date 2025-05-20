@@ -83,19 +83,11 @@ jobs:
 
       - name: Download release asset
         run: |
-          curl -L "${{ steps.get_release.outputs.asset_url }}" -o "${{ steps.get_release.outputs.asset_name }}"
+          curl -L "${{ steps.get_release.outputs.asset_url }}" -o release.zip
 
       - name: Extract archive
         run: |
-          if [[ "${{ steps.get_release.outputs.asset_name }}" == *.zip ]]; then
-            unzip "${{ steps.get_release.outputs.asset_name }}" -d dist
-          elif [[ "${{ steps.get_release.outputs.asset_name }}" == *.tar.gz ]]; then
-            mkdir -p dist
-            tar -xzf "${{ steps.get_release.outputs.asset_name }}" -C dist
-          else
-            echo "Unsupported archive format"
-            exit 1
-          fi
+          unzip release.zip -d dist
 
       - name: Configure Namadillo
         working-directory: .
@@ -125,7 +117,8 @@ jobs:
             git rm -r . || true  # Ignore if there is nothing to remove
             git commit -m "docs: Cleanup old version" || true # Prevent failure if nothing changed
             echo copying the new site
-            cp -r ../dist/${{ steps.get_release.outputs.asset_name }}/* .
+            ls ../dist
+            cp -r ../dist/release/* .
             git add .
             git commit -m "docs: Deploy version"
             git push origin main
